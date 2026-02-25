@@ -38,6 +38,8 @@
             delve
             gotools
             go-tools
+            sqlc
+            sqlite
           ];
 
           shellHook = ''
