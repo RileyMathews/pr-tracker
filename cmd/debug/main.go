@@ -16,17 +16,17 @@ func main() {
 	const repoName = "MercuryTechnologies/mercury-web-backend"
 	const prID = 65326
 
-	// openPRs, err := gh.FetchOpenPullRequests(repoName, token)
-	// if err != nil {
-	// 	log.Fatalf("fetch open PRs failed: %v", err)
-	// }
-	// log.Printf("Open PRs response (%d PRs): %+v", len(openPRs), openPRs)
-	//
-	// prDetails, err := gh.FetchPullRequestDetails(repoName, prID, token)
-	// if err != nil {
-	// 	log.Fatalf("fetch PR details failed: %v", err)
-	// }
-	// log.Printf("PR details response: %+v", prDetails)
+	openPRs, err := gh.FetchOpenPullRequests(repoName, token)
+	if err != nil {
+		log.Fatalf("fetch open PRs failed: %v", err)
+	}
+	log.Printf("Open PRs response (%d PRs): %+v", len(openPRs), openPRs)
+
+	prDetails, err := gh.FetchPullRequestDetails(repoName, prID, token)
+	if err != nil {
+		log.Fatalf("fetch PR details failed: %v", err)
+	}
+	log.Printf("PR details response: %+v", prDetails)
 
 	ciStatuses, err := gh.FetchPullRequestCIStatuses(repoName, prID, token)
 	if err != nil {
