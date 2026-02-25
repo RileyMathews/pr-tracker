@@ -5,3 +5,4 @@
 /ght-ui
 /.tmp/
 .envrc.secret
+.direnv
