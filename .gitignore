@@ -1,0 +1,7 @@
+/.gopath/
+/ght.db
+/ght
+/ghtd
+/ght-ui
+/.tmp/
+.envrc.secret
