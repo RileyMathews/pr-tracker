@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	gh "git.rileymathews.com/riley/pr-tracker/internal/github"
+	"git.rileymathews.com/riley/pr-tracker/internal/service"
 )
 
 func main() {
@@ -16,21 +16,9 @@ func main() {
 	const repoName = "MercuryTechnologies/mercury-web-backend"
 	const prID = 65326
 
-	openPRs, err := gh.FetchOpenPullRequests(repoName, token)
+	internalPR, err := service.FetchPullRequestDetails(repoName, prID, token)
 	if err != nil {
-		log.Fatalf("fetch open PRs failed: %v", err)
+		log.Fatalf("transform github PR to internal model failed: %v", err)
 	}
-	log.Printf("Open PRs response (%d PRs): %+v", len(openPRs), openPRs)
-
-	prDetails, err := gh.FetchPullRequestDetails(repoName, prID, token)
-	if err != nil {
-		log.Fatalf("fetch PR details failed: %v", err)
-	}
-	log.Printf("PR details response: %+v", prDetails)
-
-	ciStatuses, err := gh.FetchPullRequestCIStatuses(repoName, prID, token)
-	if err != nil {
-		log.Fatalf("fetch PR CI statuses failed: %v", err)
-	}
-	log.Printf("PR CI statuses response: %+v", ciStatuses)
+	log.Printf("Internal PR response: %+v", internalPR)
 }

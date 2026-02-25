@@ -18,6 +18,7 @@ type PullRequest struct {
 	Number    int    `json:"number"`
 	Title     string `json:"title"`
 	State     string `json:"state"`
+	Draft     bool   `json:"draft"`
 	HTMLURL   string `json:"html_url"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
