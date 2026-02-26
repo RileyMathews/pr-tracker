@@ -63,7 +63,7 @@ func main() {
 		dispatchRepositoriesCommand(repo, os.Args[2:])
 
 	case "sync":
-		dispatchSyncCommand(repo)
+		dispatchSyncCommand(repo, user.AccessToken)
 
 	case "prs":
 		dispatchPrsCommand(repo)
@@ -119,12 +119,8 @@ func dispatchPrsCommand(repo *repository.DatabaseRepository) {
 	}
 }
 
-func dispatchSyncCommand(repo *repository.DatabaseRepository) {
+func dispatchSyncCommand(repo *repository.DatabaseRepository, token string) {
 	fmt.Println("Syncing data...")
-	token := os.Getenv("LOCAL_GH_TOKEN")
-	if token == "" {
-		log.Fatal("LOCAL_GH_TOKEN environment variable is required")
-	}
 	
 	repositories, err := repo.GetTrackedRepositories()
 	if err != nil {
