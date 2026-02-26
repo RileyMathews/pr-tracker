@@ -22,29 +22,16 @@ SELECT
   ci_status,
   last_comment_unix,
   last_commit_unix,
+  last_ci_status_update_unix,
   last_acknowledged_unix
 FROM pull_requests
 WHERE number = ?
 LIMIT 1
 `
 
-type GetPullRequestByNumberRow struct {
-	Number               int64         `json:"number"`
-	Title                string        `json:"title"`
-	Repository           string        `json:"repository"`
-	Author               string        `json:"author"`
-	Draft                int64         `json:"draft"`
-	CreatedAtUnix        int64         `json:"created_at_unix"`
-	UpdatedAtUnix        int64         `json:"updated_at_unix"`
-	CiStatus             int64         `json:"ci_status"`
-	LastCommentUnix      int64         `json:"last_comment_unix"`
-	LastCommitUnix       int64         `json:"last_commit_unix"`
-	LastAcknowledgedUnix sql.NullInt64 `json:"last_acknowledged_unix"`
-}
-
-func (q *Queries) GetPullRequestByNumber(ctx context.Context, number int64) (GetPullRequestByNumberRow, error) {
+func (q *Queries) GetPullRequestByNumber(ctx context.Context, number int64) (PullRequest, error) {
 	row := q.db.QueryRowContext(ctx, getPullRequestByNumber, number)
-	var i GetPullRequestByNumberRow
+	var i PullRequest
 	err := row.Scan(
 		&i.Number,
 		&i.Title,
@@ -56,6 +43,7 @@ func (q *Queries) GetPullRequestByNumber(ctx context.Context, number int64) (Get
 		&i.CiStatus,
 		&i.LastCommentUnix,
 		&i.LastCommitUnix,
+		&i.LastCiStatusUpdateUnix,
 		&i.LastAcknowledgedUnix,
 	)
 	return i, err
@@ -73,35 +61,37 @@ INSERT INTO pull_requests (
   ci_status,
   last_comment_unix,
   last_commit_unix,
+  last_ci_status_update_unix,
   last_acknowledged_unix
 ) VALUES (
-  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
-ON CONFLICT(number) DO UPDATE SET
+ON CONFLICT(repository, number) DO UPDATE SET
   title = excluded.title,
   repository = excluded.repository,
   author = excluded.author,
   draft = excluded.draft,
-  created_at_unix = excluded.created_at_unix,
   updated_at_unix = excluded.updated_at_unix,
   ci_status = excluded.ci_status,
   last_comment_unix = excluded.last_comment_unix,
   last_commit_unix = excluded.last_commit_unix,
+  last_ci_status_update_unix = excluded.last_ci_status_update_unix,
   last_acknowledged_unix = excluded.last_acknowledged_unix
 `
 
 type UpsertPullRequestParams struct {
-	Number               int64         `json:"number"`
-	Title                string        `json:"title"`
-	Repository           string        `json:"repository"`
-	Author               string        `json:"author"`
-	Draft                int64         `json:"draft"`
-	CreatedAtUnix        int64         `json:"created_at_unix"`
-	UpdatedAtUnix        int64         `json:"updated_at_unix"`
-	CiStatus             int64         `json:"ci_status"`
-	LastCommentUnix      int64         `json:"last_comment_unix"`
-	LastCommitUnix       int64         `json:"last_commit_unix"`
-	LastAcknowledgedUnix sql.NullInt64 `json:"last_acknowledged_unix"`
+	Number                 int64         `json:"number"`
+	Title                  string        `json:"title"`
+	Repository             string        `json:"repository"`
+	Author                 string        `json:"author"`
+	Draft                  bool          `json:"draft"`
+	CreatedAtUnix          int64         `json:"created_at_unix"`
+	UpdatedAtUnix          int64         `json:"updated_at_unix"`
+	CiStatus               int64         `json:"ci_status"`
+	LastCommentUnix        int64         `json:"last_comment_unix"`
+	LastCommitUnix         int64         `json:"last_commit_unix"`
+	LastCiStatusUpdateUnix int64         `json:"last_ci_status_update_unix"`
+	LastAcknowledgedUnix   sql.NullInt64 `json:"last_acknowledged_unix"`
 }
 
 func (q *Queries) UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) error {
@@ -116,6 +106,7 @@ func (q *Queries) UpsertPullRequest(ctx context.Context, arg UpsertPullRequestPa
 		arg.CiStatus,
 		arg.LastCommentUnix,
 		arg.LastCommitUnix,
+		arg.LastCiStatusUpdateUnix,
 		arg.LastAcknowledgedUnix,
 	)
 	return err

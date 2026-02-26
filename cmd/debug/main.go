@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"git.rileymathews.com/riley/pr-tracker/internal/db/gen"
+	"git.rileymathews.com/riley/pr-tracker/internal/db/repository"
 	"git.rileymathews.com/riley/pr-tracker/internal/models"
 	"git.rileymathews.com/riley/pr-tracker/internal/service"
 	_ "modernc.org/sqlite"
@@ -52,20 +53,11 @@ func main() {
 
 	queries := gen.New(dbConn)
 
-	if err := queries.UpsertPullRequest(ctx, gen.UpsertPullRequestParams{
-		Number:               int64(internalPR.Number),
-		Title:                internalPR.Title,
-		Repository:           internalPR.Repository,
-		Author:               internalPR.Author,
-		Draft:                boolToInt64(internalPR.Draft),
-		CreatedAtUnix:        internalPR.CreatedAt.Unix(),
-		UpdatedAtUnix:        internalPR.UpdatedAt.Unix(),
-		CiStatus:             int64(internalPR.CiStatus),
-		LastCommentUnix:      internalPR.LastCommentAt.Unix(),
-		LastCommitUnix:       internalPR.LastCommitAt.Unix(),
-		LastAcknowledgedUnix: timeToNullInt64(internalPR.LastAcknowledgedAt),
-	}); err != nil {
-		log.Fatalf("persist internal PR failed: %v", err)
+	repository := repository.New(queries, ctx)
+
+	saveErr := repository.SavePr(internalPR)
+	if saveErr != nil {
+		log.Fatalf("saving PR failed: %v", saveErr)
 	}
 
 	row, err := queries.GetPullRequestByNumber(ctx, int64(internalPR.Number))
@@ -78,7 +70,7 @@ func main() {
 		Title:              row.Title,
 		Repository:         row.Repository,
 		Author:             row.Author,
-		Draft:              row.Draft == 1,
+		Draft:              row.Draft,
 		CreatedAt:          time.Unix(row.CreatedAtUnix, 0).UTC(),
 		UpdatedAt:          time.Unix(row.UpdatedAtUnix, 0).UTC(),
 		CiStatus:           models.CiStatus(row.CiStatus),
