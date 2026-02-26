@@ -33,18 +33,19 @@ func (repository *DatabaseRepository) SavePr(internalPR *models.PullRequest) err
 	}
 
 	return repository.queries.UpsertPullRequest(repository.ctx, gen.UpsertPullRequestParams{
-		Number:               int64(internalPR.Number),
-		Title:                internalPR.Title,
-		Repository:           internalPR.Repository,
-		Author:               internalPR.Author,
-		Draft:                internalPR.Draft,
-		CreatedAtUnix:        internalPR.CreatedAt.Unix(),
-		UpdatedAtUnix:        internalPR.UpdatedAt.Unix(),
-		CiStatus:             int64(internalPR.CiStatus),
-		LastCommentUnix:      internalPR.LastCommentAt.Unix(),
-		LastCommitUnix:       internalPR.LastCommitAt.Unix(),
-		LastAcknowledgedUnix: timeToNullInt64(internalPR.LastAcknowledgedAt),
-		RequestedReviewers:   string(reviewersJSON),
+		Number:                 int64(internalPR.Number),
+		Title:                  internalPR.Title,
+		Repository:             internalPR.Repository,
+		Author:                 internalPR.Author,
+		Draft:                  internalPR.Draft,
+		CreatedAtUnix:          internalPR.CreatedAt.Unix(),
+		UpdatedAtUnix:          internalPR.UpdatedAt.Unix(),
+		CiStatus:               int64(internalPR.CiStatus),
+		LastCommentUnix:        internalPR.LastCommentAt.Unix(),
+		LastCommitUnix:         internalPR.LastCommitAt.Unix(),
+		LastCiStatusUpdateUnix: internalPR.LastCiStatusUpdateAt.Unix(),
+		LastAcknowledgedUnix:   timeToNullInt64(internalPR.LastAcknowledgedAt),
+		RequestedReviewers:     string(reviewersJSON),
 	})
 }
 
@@ -93,7 +94,6 @@ func (repository *DatabaseRepository) GetPrsByRepository(repoName string) ([]*mo
 
 	return prs, nil
 }
-
 
 func (repository *DatabaseRepository) GetAllPrs() ([]*models.PullRequest, error) {
 	rows, err := repository.queries.GetAllPullRequests(repository.ctx)
@@ -147,7 +147,7 @@ func (repository *DatabaseRepository) GetUser() (*models.User, error) {
 	if len(rows) > 1 {
 		return nil, fmt.Errorf("fatal error: expected at most 1 user, got %d", len(rows))
 	}
-	
+
 	if len(rows) == 0 {
 		return nil, nil
 	}
