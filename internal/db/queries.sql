@@ -27,7 +27,7 @@ ON CONFLICT(repository, number) DO UPDATE SET
   last_ci_status_update_unix = excluded.last_ci_status_update_unix,
   last_acknowledged_unix = excluded.last_acknowledged_unix;
 
--- name: GetPullRequestByNumber :one
+-- name: GetPullRequestByRepoAndNumber :one
 SELECT
   number,
   title,
@@ -42,5 +42,6 @@ SELECT
   last_ci_status_update_unix,
   last_acknowledged_unix
 FROM pull_requests
-WHERE number = ?
+WHERE repository = ?
+AND number = ?
 LIMIT 1;

@@ -10,7 +10,7 @@ import (
 	"database/sql"
 )
 
-const getPullRequestByNumber = `-- name: GetPullRequestByNumber :one
+const getPullRequestByRepoAndNumber = `-- name: GetPullRequestByRepoAndNumber :one
 SELECT
   number,
   title,
@@ -25,12 +25,18 @@ SELECT
   last_ci_status_update_unix,
   last_acknowledged_unix
 FROM pull_requests
-WHERE number = ?
+WHERE repository = ?
+AND number = ?
 LIMIT 1
 `
 
-func (q *Queries) GetPullRequestByNumber(ctx context.Context, number int64) (PullRequest, error) {
-	row := q.db.QueryRowContext(ctx, getPullRequestByNumber, number)
+type GetPullRequestByRepoAndNumberParams struct {
+	Repository string `json:"repository"`
+	Number     int64  `json:"number"`
+}
+
+func (q *Queries) GetPullRequestByRepoAndNumber(ctx context.Context, arg GetPullRequestByRepoAndNumberParams) (PullRequest, error) {
+	row := q.db.QueryRowContext(ctx, getPullRequestByRepoAndNumber, arg.Repository, arg.Number)
 	var i PullRequest
 	err := row.Scan(
 		&i.Number,

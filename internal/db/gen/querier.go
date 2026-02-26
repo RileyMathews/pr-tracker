@@ -9,7 +9,7 @@ import (
 )
 
 type Querier interface {
-	GetPullRequestByNumber(ctx context.Context, number int64) (PullRequest, error)
+	GetPullRequestByRepoAndNumber(ctx context.Context, arg GetPullRequestByRepoAndNumberParams) (PullRequest, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) error
 }
 

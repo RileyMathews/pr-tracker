@@ -6,3 +6,4 @@
 /.tmp/
 .envrc.secret
 .direnv
+tmp

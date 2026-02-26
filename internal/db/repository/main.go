@@ -37,6 +37,41 @@ func (repository *DatabaseRepository) SavePr(internalPR *models.PullRequest) err
 	})
 }
 
+func (repository *DatabaseRepository) GetPr(repoName string, prNumber int) (*models.PullRequest, error) {
+	row, err := repository.queries.GetPullRequestByRepoAndNumber(repository.ctx, gen.GetPullRequestByRepoAndNumberParams{
+		Repository: repoName,
+		Number:     int64(prNumber),
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	var lastAcknowledgedAt *time.Time
+	if row.LastAcknowledgedUnix.Valid {
+		t := time.Unix(row.LastAcknowledgedUnix.Int64, 0).UTC()
+		lastAcknowledgedAt = &t
+	}
+
+	return &models.PullRequest{
+		Number:               int(row.Number),
+		Title:                row.Title,
+		Repository:           row.Repository,
+		Author:               row.Author,
+		Draft:                row.Draft,
+		CreatedAt:            time.Unix(row.CreatedAtUnix, 0).UTC(),
+		UpdatedAt:            time.Unix(row.UpdatedAtUnix, 0).UTC(),
+		CiStatus:             models.CiStatus(row.CiStatus),
+		LastCommentAt:        time.Unix(row.LastCommentUnix, 0).UTC(),
+		LastCommitAt:         time.Unix(row.LastCommitUnix, 0).UTC(),
+		LastCiStatusUpdateAt: time.Unix(row.LastCiStatusUpdateUnix, 0).UTC(),
+		LastAcknowledgedAt:   lastAcknowledgedAt,
+	}, nil
+}
+
 
 func timeToNullInt64(value *time.Time) sql.NullInt64 {
 	if value == nil {

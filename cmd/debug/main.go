@@ -16,7 +16,6 @@ import (
 
 	"git.rileymathews.com/riley/pr-tracker/internal/db/gen"
 	"git.rileymathews.com/riley/pr-tracker/internal/db/repository"
-	"git.rileymathews.com/riley/pr-tracker/internal/models"
 	"git.rileymathews.com/riley/pr-tracker/internal/service"
 	_ "modernc.org/sqlite"
 )
@@ -60,23 +59,9 @@ func main() {
 		log.Fatalf("saving PR failed: %v", saveErr)
 	}
 
-	row, err := queries.GetPullRequestByNumber(ctx, int64(internalPR.Number))
-	if err != nil {
-		log.Fatalf("read persisted internal PR failed: %v", err)
-	}
-
-	persistedPR := &models.PullRequest{
-		Number:             int(row.Number),
-		Title:              row.Title,
-		Repository:         row.Repository,
-		Author:             row.Author,
-		Draft:              row.Draft,
-		CreatedAt:          time.Unix(row.CreatedAtUnix, 0).UTC(),
-		UpdatedAt:          time.Unix(row.UpdatedAtUnix, 0).UTC(),
-		CiStatus:           models.CiStatus(row.CiStatus),
-		LastCommentAt:      time.Unix(row.LastCommentUnix, 0).UTC(),
-		LastCommitAt:       time.Unix(row.LastCommitUnix, 0).UTC(),
-		LastAcknowledgedAt: nullInt64ToTimePtr(row.LastAcknowledgedUnix),
+	persistedPR, fetchErr := repository.GetPr(internalPR.Repository, internalPR.Number)
+	if fetchErr != nil {
+		log.Fatalf("Fetching PR failed: %v", fetchErr)
 	}
 
 	log.Printf("Persisted internal PR response: %+v", persistedPR)
