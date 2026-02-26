@@ -9,7 +9,7 @@ import (
 )
 
 type Querier interface {
-	GetPullRequestByNumber(ctx context.Context, number int64) (PullRequest, error)
+	GetPullRequestByNumber(ctx context.Context, number int64) (GetPullRequestByNumberRow, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) error
 }
 

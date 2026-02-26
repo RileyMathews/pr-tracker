@@ -22,6 +22,7 @@ type PullRequest struct {
 
 	LastCommentAt time.Time
 	LastCommitAt  time.Time
+	CiStatusLastUpdatedAt time.Time
 
 	LastAcknowledgedAt *time.Time
 }

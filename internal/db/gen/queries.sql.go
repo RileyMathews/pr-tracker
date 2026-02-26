@@ -28,9 +28,23 @@ WHERE number = ?
 LIMIT 1
 `
 
-func (q *Queries) GetPullRequestByNumber(ctx context.Context, number int64) (PullRequest, error) {
+type GetPullRequestByNumberRow struct {
+	Number               int64         `json:"number"`
+	Title                string        `json:"title"`
+	Repository           string        `json:"repository"`
+	Author               string        `json:"author"`
+	Draft                int64         `json:"draft"`
+	CreatedAtUnix        int64         `json:"created_at_unix"`
+	UpdatedAtUnix        int64         `json:"updated_at_unix"`
+	CiStatus             int64         `json:"ci_status"`
+	LastCommentUnix      int64         `json:"last_comment_unix"`
+	LastCommitUnix       int64         `json:"last_commit_unix"`
+	LastAcknowledgedUnix sql.NullInt64 `json:"last_acknowledged_unix"`
+}
+
+func (q *Queries) GetPullRequestByNumber(ctx context.Context, number int64) (GetPullRequestByNumberRow, error) {
 	row := q.db.QueryRowContext(ctx, getPullRequestByNumber, number)
-	var i PullRequest
+	var i GetPullRequestByNumberRow
 	err := row.Scan(
 		&i.Number,
 		&i.Title,

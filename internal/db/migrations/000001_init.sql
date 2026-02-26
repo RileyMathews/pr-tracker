@@ -9,5 +9,6 @@ CREATE TABLE IF NOT EXISTS pull_requests (
   ci_status INTEGER NOT NULL,
   last_comment_unix INTEGER NOT NULL,
   last_commit_unix INTEGER NOT NULL,
+  ci_status_last_updated_at_unix INTEGER NOT NULL,
   last_acknowledged_unix INTEGER
 );

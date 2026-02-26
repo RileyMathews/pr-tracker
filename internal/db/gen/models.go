@@ -9,15 +9,16 @@ import (
 )
 
 type PullRequest struct {
-	Number               int64         `json:"number"`
-	Title                string        `json:"title"`
-	Repository           string        `json:"repository"`
-	Author               string        `json:"author"`
-	Draft                int64         `json:"draft"`
-	CreatedAtUnix        int64         `json:"created_at_unix"`
-	UpdatedAtUnix        int64         `json:"updated_at_unix"`
-	CiStatus             int64         `json:"ci_status"`
-	LastCommentUnix      int64         `json:"last_comment_unix"`
-	LastCommitUnix       int64         `json:"last_commit_unix"`
-	LastAcknowledgedUnix sql.NullInt64 `json:"last_acknowledged_unix"`
+	Number                    int64         `json:"number"`
+	Title                     string        `json:"title"`
+	Repository                string        `json:"repository"`
+	Author                    string        `json:"author"`
+	Draft                     int64         `json:"draft"`
+	CreatedAtUnix             int64         `json:"created_at_unix"`
+	UpdatedAtUnix             int64         `json:"updated_at_unix"`
+	CiStatus                  int64         `json:"ci_status"`
+	LastCommentUnix           int64         `json:"last_comment_unix"`
+	LastCommitUnix            int64         `json:"last_commit_unix"`
+	CiStatusLastUpdatedAtUnix int64         `json:"ci_status_last_updated_at_unix"`
+	LastAcknowledgedUnix      sql.NullInt64 `json:"last_acknowledged_unix"`
 }
