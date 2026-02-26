@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"time"
 
 	"git.rileymathews.com/riley/pr-tracker/internal/db/gen"
 	"git.rileymathews.com/riley/pr-tracker/internal/db/repository"
@@ -91,27 +90,3 @@ func applyMigrations(ctx context.Context, dbConn *sql.DB, migrationsDir string) 
 	return nil
 }
 
-func boolToInt64(value bool) int64 {
-	if value {
-		return 1
-	}
-
-	return 0
-}
-
-func timeToNullInt64(value *time.Time) sql.NullInt64 {
-	if value == nil {
-		return sql.NullInt64{}
-	}
-
-	return sql.NullInt64{Int64: value.Unix(), Valid: true}
-}
-
-func nullInt64ToTimePtr(value sql.NullInt64) *time.Time {
-	if !value.Valid {
-		return nil
-	}
-
-	t := time.Unix(value.Int64, 0).UTC()
-	return &t
-}
