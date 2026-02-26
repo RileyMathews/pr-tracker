@@ -327,8 +327,8 @@ func parseNextURL(linkHeader string) string {
 		return ""
 	}
 
-	parts := strings.Split(linkHeader, ",")
-	for _, part := range parts {
+	parts := strings.SplitSeq(linkHeader, ",")
+	for part := range parts {
 		segment := strings.TrimSpace(part)
 		if !strings.Contains(segment, `rel="next"`) {
 			continue

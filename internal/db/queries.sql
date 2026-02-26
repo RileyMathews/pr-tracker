@@ -87,3 +87,27 @@ INSERT INTO users (username, access_token) VALUES (?, ?);
 
 -- name: GetUsers :many
 SELECT id, username, access_token FROM users;
+
+-- name: GetPrsByRepository :many
+SELECT
+  number,
+  title,
+  repository,
+  author,
+  draft,
+  created_at_unix,
+  updated_at_unix,
+  ci_status,
+  last_comment_unix,
+  last_commit_unix,
+  last_ci_status_update_unix,
+  last_acknowledged_unix,
+  requested_reviewers
+FROM pull_requests
+WHERE repository = ?;
+
+-- name: DeletePrByRepositoryAndNumber :exec
+DELETE FROM pull_requests
+WHERE repository = ?
+AND number= ?;
+

@@ -141,26 +141,41 @@ func dispatchSyncCommand(repo *repository.DatabaseRepository, token string) {
 
 	for _, repository := range repositories {
 		fmt.Printf("Syncing repository: %s\n", repository)
-		prs, err := github.FetchOpenPullRequests(repository, token)
+		newData, err := service.FetchTrackedPullRequests(repository, trackedAuthors, token)
 		if err != nil {
 			log.Printf("fetch open prs for repository %s failed: %v", repository, err)
 			continue
 		}
-		log.Printf("fetched %d open prs for repository %s", len(prs), repository)
+		log.Printf("fetched %d open prs for repository %s", len(newData), repository)
+		existingPrs, err := repo.GetPrsByRepository(repository)
+		if err != nil {
+			log.Printf("fetch existing prs for repository %s failed: %v", repository, err)
+			continue
+		}
 		
-		for _, pr := range prs {
-			if core.ShouldTrackPR(&pr, trackedAuthors) {
-				log.Printf("tracking pr #%d in repository %s", pr.Number, repository)
-				prDetails, err := service.FetchPullRequestDetails(repository, pr.Number, token)
-				if err != nil {
-					log.Printf("fetch pr details for pr #%d in repository %s failed: %v", pr.Number, repository, err)
-					continue
-				}
-				if err := repo.SavePr(prDetails); err != nil {
-					log.Printf("save pr details for pr #%d in repository %s failed: %v", pr.Number, repository, err)
-					continue
-				}
+		newPrs, updatedPrs, deletedPrs := core.ProcessPullRequestSyncResults(existingPrs, newData)
+		for _, pr := range newPrs {
+			if err := repo.SavePr(pr); err != nil {
+				log.Printf("save pr #%d for repository %s failed: %v", pr.Number, repository, err)
+				continue
 			}
+			log.Printf("saved new pr #%d for repository %s", pr.Number, repository)
+		}
+
+		for _, pr := range updatedPrs {
+			if err := repo.SavePr(pr); err != nil {
+				log.Printf("update pr #%d for repository %s failed: %v", pr.Number, repository, err)
+				continue
+			}
+			log.Printf("updated pr #%d for repository %s", pr.Number, repository)
+		}
+
+		for _, pr := range deletedPrs {
+			if err := repo.DeletePr(pr.Repository, pr.Number); err != nil {
+				log.Printf("delete pr #%d for repository %s failed: %v", pr.Number, repository, err)
+				continue
+			}
+			log.Printf("deleted pr #%d for repository %s", pr.Number, repository)
 		}
 	}
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	gh "git.rileymathews.com/riley/pr-tracker/internal/github"
@@ -10,6 +11,31 @@ import (
 
 func FetchPullRequestDetails(repoName string, prID int, authToken string) (*models.PullRequest, error) {
 	return fetchPullRequestDetails(repoName, prID, authToken)
+}
+
+func FetchTrackedPullRequests(repoName string, authorsToTrack []string, authToken string) ([]*models.PullRequest, error) {
+	return fetchTrackedPullRequests(repoName, authorsToTrack, authToken)
+}
+
+func fetchTrackedPullRequests(repoName string, authorsToTrack []string, authToken string) ([]*models.PullRequest, error) {
+	prs, err := gh.FetchOpenPullRequests(repoName, authToken)
+	if err != nil {
+		return nil, fmt.Errorf("fetch open pull requests: %w", err)
+	}
+
+	var result []*models.PullRequest
+	for _, pr := range prs {
+		if !shouldTrackPR(&pr, authorsToTrack) {
+			continue
+		}
+		details, err := fetchPullRequestDetails(repoName, pr.Number, authToken)
+		if err != nil {
+			return nil, fmt.Errorf("fetch pr details for #%d: %w", pr.Number, err)
+		}
+		result = append(result, details)
+	}
+
+	return result, nil
 }
 
 func fetchPullRequestDetails(repoName string, prID int, authToken string) (*models.PullRequest, error) {
@@ -144,6 +170,14 @@ func hasPendingCheckRun(checkRuns []gh.CheckRun) bool {
 		case "queued", "in_progress", "waiting", "requested", "pending":
 			return true
 		}
+	}
+
+	return false
+}
+
+func shouldTrackPR(pr *gh.PullRequest, authorsToTrack []string) bool {
+	if slices.Contains(authorsToTrack, pr.User.Login) {
+		return true
 	}
 
 	return false

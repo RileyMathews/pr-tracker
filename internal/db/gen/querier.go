@@ -9,8 +9,10 @@ import (
 )
 
 type Querier interface {
+	DeletePrByRepositoryAndNumber(ctx context.Context, arg DeletePrByRepositoryAndNumberParams) error
 	DeleteTrackedRepository(ctx context.Context, repository string) error
 	GetAllPullRequests(ctx context.Context) ([]PullRequest, error)
+	GetPrsByRepository(ctx context.Context, repository string) ([]PullRequest, error)
 	GetPullRequestByRepoAndNumber(ctx context.Context, arg GetPullRequestByRepoAndNumberParams) (PullRequest, error)
 	GetTrackedAuthors(ctx context.Context) ([]string, error)
 	GetTrackedRepositories(ctx context.Context) ([]string, error)

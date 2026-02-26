@@ -48,6 +48,53 @@ func (repository *DatabaseRepository) SavePr(internalPR *models.PullRequest) err
 	})
 }
 
+func (repository *DatabaseRepository) DeletePr(repoName string, prNumber int) error {
+	return repository.queries.DeletePrByRepositoryAndNumber(repository.ctx, gen.DeletePrByRepositoryAndNumberParams{
+		Repository: repoName,
+		Number:     int64(prNumber),
+	})
+}
+
+func (repository *DatabaseRepository) GetPrsByRepository(repoName string) ([]*models.PullRequest, error) {
+	rows, err := repository.queries.GetPrsByRepository(repository.ctx, repoName)
+	if err != nil {
+		return nil, err
+	}
+
+	prs := make([]*models.PullRequest, 0, len(rows))
+	for _, row := range rows {
+		var lastAcknowledgedAt *time.Time
+		if row.LastAcknowledgedUnix.Valid {
+			t := time.Unix(row.LastAcknowledgedUnix.Int64, 0).UTC()
+			lastAcknowledgedAt = &t
+		}
+
+		var reviewerLogins []string
+		if err := json.Unmarshal([]byte(row.RequestedReviewers), &reviewerLogins); err != nil {
+			return nil, fmt.Errorf("unmarshal requested_reviewers for pr %d: %w", row.Number, err)
+		}
+
+		prs = append(prs, &models.PullRequest{
+			Number:               int(row.Number),
+			Title:                row.Title,
+			Repository:           row.Repository,
+			Author:               row.Author,
+			Draft:                row.Draft,
+			CreatedAt:            time.Unix(row.CreatedAtUnix, 0).UTC(),
+			UpdatedAt:            time.Unix(row.UpdatedAtUnix, 0).UTC(),
+			CiStatus:             models.CiStatus(row.CiStatus),
+			LastCommentAt:        time.Unix(row.LastCommentUnix, 0).UTC(),
+			LastCommitAt:         time.Unix(row.LastCommitUnix, 0).UTC(),
+			LastCiStatusUpdateAt: time.Unix(row.LastCiStatusUpdateUnix, 0).UTC(),
+			LastAcknowledgedAt:   lastAcknowledgedAt,
+			RequestedReviewers:   reviewerLogins,
+		})
+	}
+
+	return prs, nil
+}
+
+
 func (repository *DatabaseRepository) GetAllPrs() ([]*models.PullRequest, error) {
 	rows, err := repository.queries.GetAllPullRequests(repository.ctx)
 	if err != nil {

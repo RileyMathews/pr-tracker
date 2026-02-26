@@ -10,6 +10,22 @@ import (
 	"database/sql"
 )
 
+const deletePrByRepositoryAndNumber = `-- name: DeletePrByRepositoryAndNumber :exec
+DELETE FROM pull_requests
+WHERE repository = ?
+AND number= ?
+`
+
+type DeletePrByRepositoryAndNumberParams struct {
+	Repository string `json:"repository"`
+	Number     int64  `json:"number"`
+}
+
+func (q *Queries) DeletePrByRepositoryAndNumber(ctx context.Context, arg DeletePrByRepositoryAndNumberParams) error {
+	_, err := q.db.ExecContext(ctx, deletePrByRepositoryAndNumber, arg.Repository, arg.Number)
+	return err
+}
+
 const deleteTrackedRepository = `-- name: DeleteTrackedRepository :exec
 DELETE FROM tracked_repositories
 WHERE repository = ?
@@ -40,6 +56,62 @@ FROM pull_requests
 
 func (q *Queries) GetAllPullRequests(ctx context.Context) ([]PullRequest, error) {
 	rows, err := q.db.QueryContext(ctx, getAllPullRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PullRequest
+	for rows.Next() {
+		var i PullRequest
+		if err := rows.Scan(
+			&i.Number,
+			&i.Title,
+			&i.Repository,
+			&i.Author,
+			&i.Draft,
+			&i.CreatedAtUnix,
+			&i.UpdatedAtUnix,
+			&i.CiStatus,
+			&i.LastCommentUnix,
+			&i.LastCommitUnix,
+			&i.LastCiStatusUpdateUnix,
+			&i.LastAcknowledgedUnix,
+			&i.RequestedReviewers,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPrsByRepository = `-- name: GetPrsByRepository :many
+SELECT
+  number,
+  title,
+  repository,
+  author,
+  draft,
+  created_at_unix,
+  updated_at_unix,
+  ci_status,
+  last_comment_unix,
+  last_commit_unix,
+  last_ci_status_update_unix,
+  last_acknowledged_unix,
+  requested_reviewers
+FROM pull_requests
+WHERE repository = ?
+`
+
+func (q *Queries) GetPrsByRepository(ctx context.Context, repository string) ([]PullRequest, error) {
+	rows, err := q.db.QueryContext(ctx, getPrsByRepository, repository)
 	if err != nil {
 		return nil, err
 	}
