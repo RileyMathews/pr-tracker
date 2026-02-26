@@ -11,6 +11,7 @@ import (
 	"git.rileymathews.com/riley/pr-tracker/internal/db/gen"
 	"git.rileymathews.com/riley/pr-tracker/internal/db/repository"
 	"git.rileymathews.com/riley/pr-tracker/internal/github"
+	"git.rileymathews.com/riley/pr-tracker/internal/models"
 	"git.rileymathews.com/riley/pr-tracker/internal/service"
 	_ "modernc.org/sqlite"
 )
@@ -39,6 +40,21 @@ func main() {
 	queries := gen.New(dbConn)
 	repo := repository.New(queries, ctx)
 
+	if os.Args[1] == "auth" {
+		log.Println("Authenticating user...")
+		dispatchAuthCommand(repo, os.Args[2:])
+		log.Println("User authenticated successfully")
+		os.Exit(0)
+	}
+
+	user, err := repo.GetUser()
+	if err != nil {
+		log.Fatalf("fetch user failed: %v", err)
+	}
+	if user == nil {
+		log.Fatal("no authenticated user found, please run 'cli auth <token>' to authenticate")
+	}
+
 	switch os.Args[1] {
 	case "authors":
 		dispatchAuthorsCommand(repo, os.Args[2:])
@@ -57,6 +73,40 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+func dispatchAuthCommand(repo *repository.DatabaseRepository, args []string) {
+	// ensure we don't already have a user configured
+	maybeUser, err := repo.GetUser()
+	if err != nil {
+		log.Fatalf("fetch user failed: %v", err)
+	}
+	if maybeUser != nil {
+		log.Fatalf("a user is already authenticated as '%s', please remove the existing user before authenticating a new one", maybeUser.Username)
+	}
+
+	log.Println("Fetching authenticated user...")
+	if len(args) < 1 {
+		log.Println("Authentication token is required")
+		printUsage()
+		os.Exit(1)
+	}
+	auth_token := args[0]
+	user, err := github.FetchAuthenticatedUser(auth_token)
+	if err != nil {
+		log.Fatalf("fetch authenticated user failed: %v", err)
+	}
+	fmt.Printf("Authenticated as: %s\n", user.Login)
+
+	user_model := &models.User{
+		Username:    user.Login,
+		AccessToken: auth_token,
+	}
+
+	if err := repo.SaveUser(user_model); err != nil {
+		log.Fatalf("save user failed: %v", err)
+	}
+}
+
 
 func dispatchPrsCommand(repo *repository.DatabaseRepository) {
 	prs, err := repo.GetAllPrs()

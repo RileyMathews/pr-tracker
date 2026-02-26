@@ -14,8 +14,10 @@ type Querier interface {
 	GetPullRequestByRepoAndNumber(ctx context.Context, arg GetPullRequestByRepoAndNumberParams) (PullRequest, error)
 	GetTrackedAuthors(ctx context.Context) ([]string, error)
 	GetTrackedRepositories(ctx context.Context) ([]string, error)
+	GetUsers(ctx context.Context) ([]User, error)
 	SaveTrackedAuthor(ctx context.Context, author string) error
 	SaveTrackedRepository(ctx context.Context, repository string) error
+	SaveUser(ctx context.Context, arg SaveUserParams) error
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) error
 }
 

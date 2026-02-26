@@ -22,3 +22,10 @@ CREATE TABLE IF NOT EXISTS tracked_authors (
 CREATE TABLE IF NOT EXISTS tracked_repositories (
   repository TEXT NOT NULL PRIMARY KEY
 );
+
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL,
+  access_token TEXT NOT NULL UNIQUE
+);
+

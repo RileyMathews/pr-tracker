@@ -28,3 +28,8 @@ type PullRequest struct {
 
 	RequestedReviewers []string
 }
+
+type User struct {
+	AccessToken string
+	Username string
+}

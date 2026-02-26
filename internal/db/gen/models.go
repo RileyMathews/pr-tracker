@@ -31,3 +31,9 @@ type TrackedAuthor struct {
 type TrackedRepository struct {
 	Repository string `json:"repository"`
 }
+
+type User struct {
+	ID          int64  `json:"id"`
+	Username    string `json:"username"`
+	AccessToken string `json:"access_token"`
+}

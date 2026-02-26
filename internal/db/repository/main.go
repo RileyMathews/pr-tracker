@@ -87,6 +87,37 @@ func (repository *DatabaseRepository) GetAllPrs() ([]*models.PullRequest, error)
 	return prs, nil
 }
 
+func (repository *DatabaseRepository) GetUser() (*models.User, error) {
+	rows, err := repository.queries.GetUsers(repository.ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	if len(rows) > 1 {
+		return nil, fmt.Errorf("fatal error: expected at most 1 user, got %d", len(rows))
+	}
+	
+	if len(rows) == 0 {
+		return nil, nil
+	}
+
+	return &models.User{
+		AccessToken: rows[0].AccessToken,
+		Username:    rows[0].Username,
+	}, nil
+}
+
+func (repository *DatabaseRepository) SaveUser(user *models.User) error {
+	return repository.queries.SaveUser(repository.ctx, gen.SaveUserParams{
+		Username:    user.Username,
+		AccessToken: user.AccessToken,
+	})
+}
+
 func (repository *DatabaseRepository) GetPr(repoName string, prNumber int) (*models.PullRequest, error) {
 	row, err := repository.queries.GetPullRequestByRepoAndNumber(repository.ctx, gen.GetPullRequestByRepoAndNumberParams{
 		Repository: repoName,

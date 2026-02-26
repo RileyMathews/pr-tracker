@@ -176,6 +176,33 @@ func (q *Queries) GetTrackedRepositories(ctx context.Context) ([]string, error) 
 	return items, nil
 }
 
+const getUsers = `-- name: GetUsers :many
+SELECT id, username, access_token FROM users
+`
+
+func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(&i.ID, &i.Username, &i.AccessToken); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const saveTrackedAuthor = `-- name: SaveTrackedAuthor :exec
 INSERT INTO tracked_authors (author) VALUES (?)
 `
@@ -191,6 +218,20 @@ INSERT INTO tracked_repositories (repository) VALUES (?)
 
 func (q *Queries) SaveTrackedRepository(ctx context.Context, repository string) error {
 	_, err := q.db.ExecContext(ctx, saveTrackedRepository, repository)
+	return err
+}
+
+const saveUser = `-- name: SaveUser :exec
+INSERT INTO users (username, access_token) VALUES (?, ?)
+`
+
+type SaveUserParams struct {
+	Username    string `json:"username"`
+	AccessToken string `json:"access_token"`
+}
+
+func (q *Queries) SaveUser(ctx context.Context, arg SaveUserParams) error {
+	_, err := q.db.ExecContext(ctx, saveUser, arg.Username, arg.AccessToken)
 	return err
 }
 

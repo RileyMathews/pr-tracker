@@ -81,3 +81,9 @@ SELECT repository FROM tracked_repositories;
 -- name: DeleteTrackedRepository :exec
 DELETE FROM tracked_repositories
 WHERE repository = ?;
+
+-- name: SaveUser :exec
+INSERT INTO users (username, access_token) VALUES (?, ?);
+
+-- name: GetUsers :many
+SELECT id, username, access_token FROM users;

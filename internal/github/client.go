@@ -19,6 +19,15 @@ type Reviewer struct {
 	Login string `json:"login"`
 }
 
+type User struct {
+	Login     string `json:"login"`
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	AvatarURL string `json:"avatar_url"`
+	HTMLURL   string `json:"html_url"`
+}
+
 type PullRequest struct {
 	Number    int    `json:"number"`
 	Title     string `json:"title"`
@@ -93,6 +102,22 @@ type PullRequestCIStatuses struct {
 	CombinedState     string                `json:"combined_state"`
 	Statuses          []CommitStatusContext `json:"statuses"`
 	CheckRuns         []CheckRun            `json:"check_runs"`
+}
+
+func FetchAuthenticatedUser(authToken string) (*User, error) {
+	if strings.TrimSpace(authToken) == "" {
+		return nil, errors.New("auth token is required")
+	}
+
+	httpClient := &http.Client{}
+	user := &User{}
+
+	userURL := fmt.Sprintf("%s/user", baseURL)
+	if _, err := getJSON(httpClient, userURL, authToken, user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func FetchOpenPullRequests(repoName, authToken string) ([]PullRequest, error) {
