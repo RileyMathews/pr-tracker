@@ -8,3 +8,4 @@
 .direnv
 tmp
 tmp
+db.sqlite3

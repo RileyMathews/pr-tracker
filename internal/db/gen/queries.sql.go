@@ -10,6 +10,69 @@ import (
 	"database/sql"
 )
 
+const deleteTrackedRepository = `-- name: DeleteTrackedRepository :exec
+DELETE FROM tracked_repositories
+WHERE repository = ?
+`
+
+func (q *Queries) DeleteTrackedRepository(ctx context.Context, repository string) error {
+	_, err := q.db.ExecContext(ctx, deleteTrackedRepository, repository)
+	return err
+}
+
+const getAllPullRequests = `-- name: GetAllPullRequests :many
+SELECT
+  number,
+  title,
+  repository,
+  author,
+  draft,
+  created_at_unix,
+  updated_at_unix,
+  ci_status,
+  last_comment_unix,
+  last_commit_unix,
+  last_ci_status_update_unix,
+  last_acknowledged_unix
+FROM pull_requests
+`
+
+func (q *Queries) GetAllPullRequests(ctx context.Context) ([]PullRequest, error) {
+	rows, err := q.db.QueryContext(ctx, getAllPullRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PullRequest
+	for rows.Next() {
+		var i PullRequest
+		if err := rows.Scan(
+			&i.Number,
+			&i.Title,
+			&i.Repository,
+			&i.Author,
+			&i.Draft,
+			&i.CreatedAtUnix,
+			&i.UpdatedAtUnix,
+			&i.CiStatus,
+			&i.LastCommentUnix,
+			&i.LastCommitUnix,
+			&i.LastCiStatusUpdateUnix,
+			&i.LastAcknowledgedUnix,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPullRequestByRepoAndNumber = `-- name: GetPullRequestByRepoAndNumber :one
 SELECT
   number,
@@ -53,6 +116,78 @@ func (q *Queries) GetPullRequestByRepoAndNumber(ctx context.Context, arg GetPull
 		&i.LastAcknowledgedUnix,
 	)
 	return i, err
+}
+
+const getTrackedAuthors = `-- name: GetTrackedAuthors :many
+SELECT author FROM tracked_authors
+`
+
+func (q *Queries) GetTrackedAuthors(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getTrackedAuthors)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var author string
+		if err := rows.Scan(&author); err != nil {
+			return nil, err
+		}
+		items = append(items, author)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTrackedRepositories = `-- name: GetTrackedRepositories :many
+SELECT repository FROM tracked_repositories
+`
+
+func (q *Queries) GetTrackedRepositories(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getTrackedRepositories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var repository string
+		if err := rows.Scan(&repository); err != nil {
+			return nil, err
+		}
+		items = append(items, repository)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const saveTrackedAuthor = `-- name: SaveTrackedAuthor :exec
+INSERT INTO tracked_authors (author) VALUES (?)
+`
+
+func (q *Queries) SaveTrackedAuthor(ctx context.Context, author string) error {
+	_, err := q.db.ExecContext(ctx, saveTrackedAuthor, author)
+	return err
+}
+
+const saveTrackedRepository = `-- name: SaveTrackedRepository :exec
+INSERT INTO tracked_repositories (repository) VALUES (?)
+`
+
+func (q *Queries) SaveTrackedRepository(ctx context.Context, repository string) error {
+	_, err := q.db.ExecContext(ctx, saveTrackedRepository, repository)
+	return err
 }
 
 const upsertPullRequest = `-- name: UpsertPullRequest :exec

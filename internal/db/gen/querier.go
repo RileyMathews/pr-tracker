@@ -9,7 +9,13 @@ import (
 )
 
 type Querier interface {
+	DeleteTrackedRepository(ctx context.Context, repository string) error
+	GetAllPullRequests(ctx context.Context) ([]PullRequest, error)
 	GetPullRequestByRepoAndNumber(ctx context.Context, arg GetPullRequestByRepoAndNumberParams) (PullRequest, error)
+	GetTrackedAuthors(ctx context.Context) ([]string, error)
+	GetTrackedRepositories(ctx context.Context) ([]string, error)
+	SaveTrackedAuthor(ctx context.Context, author string) error
+	SaveTrackedRepository(ctx context.Context, repository string) error
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) error
 }
 

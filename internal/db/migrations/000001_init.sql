@@ -13,3 +13,11 @@ CREATE TABLE IF NOT EXISTS pull_requests (
   last_acknowledged_unix INTEGER,
   PRIMARY KEY (repository, number)
 );
+
+CREATE TABLE IF NOT EXISTS tracked_authors (
+  author TEXT NOT NULL PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS tracked_repositories (
+  repository TEXT NOT NULL PRIMARY KEY
+);
