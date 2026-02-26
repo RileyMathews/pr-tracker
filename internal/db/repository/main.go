@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,6 +27,11 @@ func New(queries *gen.Queries, context context.Context) *DatabaseRepository {
 }
 
 func (repository *DatabaseRepository) SavePr(internalPR *models.PullRequest) error {
+	reviewersJSON, err := json.Marshal(internalPR.RequestedReviewers)
+	if err != nil {
+		return fmt.Errorf("marshal requested_reviewers: %w", err)
+	}
+
 	return repository.queries.UpsertPullRequest(repository.ctx, gen.UpsertPullRequestParams{
 		Number:               int64(internalPR.Number),
 		Title:                internalPR.Title,
@@ -38,6 +44,7 @@ func (repository *DatabaseRepository) SavePr(internalPR *models.PullRequest) err
 		LastCommentUnix:      internalPR.LastCommentAt.Unix(),
 		LastCommitUnix:       internalPR.LastCommitAt.Unix(),
 		LastAcknowledgedUnix: timeToNullInt64(internalPR.LastAcknowledgedAt),
+		RequestedReviewers:   string(reviewersJSON),
 	})
 }
 
@@ -55,6 +62,11 @@ func (repository *DatabaseRepository) GetAllPrs() ([]*models.PullRequest, error)
 			lastAcknowledgedAt = &t
 		}
 
+		var reviewerLogins []string
+		if err := json.Unmarshal([]byte(row.RequestedReviewers), &reviewerLogins); err != nil {
+			return nil, fmt.Errorf("unmarshal requested_reviewers for pr %d: %w", row.Number, err)
+		}
+
 		prs = append(prs, &models.PullRequest{
 			Number:               int(row.Number),
 			Title:                row.Title,
@@ -68,12 +80,12 @@ func (repository *DatabaseRepository) GetAllPrs() ([]*models.PullRequest, error)
 			LastCommitAt:         time.Unix(row.LastCommitUnix, 0).UTC(),
 			LastCiStatusUpdateAt: time.Unix(row.LastCiStatusUpdateUnix, 0).UTC(),
 			LastAcknowledgedAt:   lastAcknowledgedAt,
+			RequestedReviewers:   reviewerLogins,
 		})
 	}
 
 	return prs, nil
 }
-
 
 func (repository *DatabaseRepository) GetPr(repoName string, prNumber int) (*models.PullRequest, error) {
 	row, err := repository.queries.GetPullRequestByRepoAndNumber(repository.ctx, gen.GetPullRequestByRepoAndNumberParams{
@@ -94,6 +106,11 @@ func (repository *DatabaseRepository) GetPr(repoName string, prNumber int) (*mod
 		lastAcknowledgedAt = &t
 	}
 
+	var reviewerLogins []string
+	if err := json.Unmarshal([]byte(row.RequestedReviewers), &reviewerLogins); err != nil {
+		return nil, fmt.Errorf("unmarshal requested_reviewers for pr %d: %w", row.Number, err)
+	}
+
 	return &models.PullRequest{
 		Number:               int(row.Number),
 		Title:                row.Title,
@@ -107,6 +124,7 @@ func (repository *DatabaseRepository) GetPr(repoName string, prNumber int) (*mod
 		LastCommitAt:         time.Unix(row.LastCommitUnix, 0).UTC(),
 		LastCiStatusUpdateAt: time.Unix(row.LastCiStatusUpdateUnix, 0).UTC(),
 		LastAcknowledgedAt:   lastAcknowledgedAt,
+		RequestedReviewers:   reviewerLogins,
 	}, nil
 }
 

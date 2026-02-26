@@ -15,6 +15,10 @@ const (
 	perPage = 100
 )
 
+type Reviewer struct {
+	Login string `json:"login"`
+}
+
 type PullRequest struct {
 	Number    int    `json:"number"`
 	Title     string `json:"title"`
@@ -26,6 +30,7 @@ type PullRequest struct {
 	User      struct {
 		Login string `json:"login"`
 	} `json:"user"`
+	RequestedReviewers []Reviewer `json:"requested_reviewers"`
 }
 
 type IssueComment struct {

@@ -25,4 +25,6 @@ type PullRequest struct {
 	LastCiStatusUpdateAt time.Time
 
 	LastAcknowledgedAt *time.Time
+
+	RequestedReviewers []string
 }

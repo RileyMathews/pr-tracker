@@ -33,17 +33,23 @@ func fetchPullRequestDetails(repoName string, prID int, authToken string) (*mode
 		return nil, fmt.Errorf("parse pr updated_at: %w", err)
 	}
 
+	reviewerLogins := make([]string, 0, len(prDetails.RequestedReviewers))
+	for _, r := range prDetails.RequestedReviewers {
+		reviewerLogins = append(reviewerLogins, r.Login)
+	}
+
 	return &models.PullRequest{
-		Number:        prDetails.Number,
-		Title:         prDetails.Title,
-		Repository:    repoName,
-		Author:        prDetails.User.Login,
-		Draft:         prDetails.Draft,
-		CreatedAt:     createdAt,
-		UpdatedAt:     updatedAt,
-		CiStatus:      mapCIStatus(ciStatuses),
-		LastCommentAt: latestCommentTime(prDetails),
-		LastCommitAt:  latestCommitActivityTime(ciStatuses),
+		Number:             prDetails.Number,
+		Title:              prDetails.Title,
+		Repository:         repoName,
+		Author:             prDetails.User.Login,
+		Draft:              prDetails.Draft,
+		CreatedAt:          createdAt,
+		UpdatedAt:          updatedAt,
+		CiStatus:           mapCIStatus(ciStatuses),
+		LastCommentAt:      latestCommentTime(prDetails),
+		LastCommitAt:       latestCommitActivityTime(ciStatuses),
+		RequestedReviewers: reviewerLogins,
 	}, nil
 }
 

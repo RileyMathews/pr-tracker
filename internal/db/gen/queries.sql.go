@@ -33,7 +33,8 @@ SELECT
   last_comment_unix,
   last_commit_unix,
   last_ci_status_update_unix,
-  last_acknowledged_unix
+  last_acknowledged_unix,
+  requested_reviewers
 FROM pull_requests
 `
 
@@ -59,6 +60,7 @@ func (q *Queries) GetAllPullRequests(ctx context.Context) ([]PullRequest, error)
 			&i.LastCommitUnix,
 			&i.LastCiStatusUpdateUnix,
 			&i.LastAcknowledgedUnix,
+			&i.RequestedReviewers,
 		); err != nil {
 			return nil, err
 		}
@@ -86,7 +88,8 @@ SELECT
   last_comment_unix,
   last_commit_unix,
   last_ci_status_update_unix,
-  last_acknowledged_unix
+  last_acknowledged_unix,
+  requested_reviewers
 FROM pull_requests
 WHERE repository = ?
 AND number = ?
@@ -114,6 +117,7 @@ func (q *Queries) GetPullRequestByRepoAndNumber(ctx context.Context, arg GetPull
 		&i.LastCommitUnix,
 		&i.LastCiStatusUpdateUnix,
 		&i.LastAcknowledgedUnix,
+		&i.RequestedReviewers,
 	)
 	return i, err
 }
@@ -203,9 +207,10 @@ INSERT INTO pull_requests (
   last_comment_unix,
   last_commit_unix,
   last_ci_status_update_unix,
-  last_acknowledged_unix
+  last_acknowledged_unix,
+  requested_reviewers
 ) VALUES (
-  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 ON CONFLICT(repository, number) DO UPDATE SET
   title = excluded.title,
@@ -217,7 +222,8 @@ ON CONFLICT(repository, number) DO UPDATE SET
   last_comment_unix = excluded.last_comment_unix,
   last_commit_unix = excluded.last_commit_unix,
   last_ci_status_update_unix = excluded.last_ci_status_update_unix,
-  last_acknowledged_unix = excluded.last_acknowledged_unix
+  last_acknowledged_unix = excluded.last_acknowledged_unix,
+  requested_reviewers = excluded.requested_reviewers
 `
 
 type UpsertPullRequestParams struct {
@@ -233,6 +239,7 @@ type UpsertPullRequestParams struct {
 	LastCommitUnix         int64         `json:"last_commit_unix"`
 	LastCiStatusUpdateUnix int64         `json:"last_ci_status_update_unix"`
 	LastAcknowledgedUnix   sql.NullInt64 `json:"last_acknowledged_unix"`
+	RequestedReviewers     string        `json:"requested_reviewers"`
 }
 
 func (q *Queries) UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) error {
@@ -249,6 +256,7 @@ func (q *Queries) UpsertPullRequest(ctx context.Context, arg UpsertPullRequestPa
 		arg.LastCommitUnix,
 		arg.LastCiStatusUpdateUnix,
 		arg.LastAcknowledgedUnix,
+		arg.RequestedReviewers,
 	)
 	return err
 }

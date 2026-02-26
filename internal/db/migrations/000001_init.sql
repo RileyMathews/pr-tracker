@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS pull_requests (
   last_commit_unix INTEGER NOT NULL,
   last_ci_status_update_unix INTEGER NOT NULL,
   last_acknowledged_unix INTEGER,
+  requested_reviewers TEXT NOT NULL DEFAULT '[]',
   PRIMARY KEY (repository, number)
 );
 

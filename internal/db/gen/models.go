@@ -21,6 +21,7 @@ type PullRequest struct {
 	LastCommitUnix         int64         `json:"last_commit_unix"`
 	LastCiStatusUpdateUnix int64         `json:"last_ci_status_update_unix"`
 	LastAcknowledgedUnix   sql.NullInt64 `json:"last_acknowledged_unix"`
+	RequestedReviewers     string        `json:"requested_reviewers"`
 }
 
 type TrackedAuthor struct {

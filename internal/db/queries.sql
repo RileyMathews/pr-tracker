@@ -11,9 +11,10 @@ INSERT INTO pull_requests (
   last_comment_unix,
   last_commit_unix,
   last_ci_status_update_unix,
-  last_acknowledged_unix
+  last_acknowledged_unix,
+  requested_reviewers
 ) VALUES (
-  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 ON CONFLICT(repository, number) DO UPDATE SET
   title = excluded.title,
@@ -25,7 +26,8 @@ ON CONFLICT(repository, number) DO UPDATE SET
   last_comment_unix = excluded.last_comment_unix,
   last_commit_unix = excluded.last_commit_unix,
   last_ci_status_update_unix = excluded.last_ci_status_update_unix,
-  last_acknowledged_unix = excluded.last_acknowledged_unix;
+  last_acknowledged_unix = excluded.last_acknowledged_unix,
+  requested_reviewers = excluded.requested_reviewers;
 
 -- name: GetAllPullRequests :many
 SELECT
@@ -40,7 +42,8 @@ SELECT
   last_comment_unix,
   last_commit_unix,
   last_ci_status_update_unix,
-  last_acknowledged_unix
+  last_acknowledged_unix,
+  requested_reviewers
 FROM pull_requests;
 
 -- name: GetPullRequestByRepoAndNumber :one
@@ -56,7 +59,8 @@ SELECT
   last_comment_unix,
   last_commit_unix,
   last_ci_status_update_unix,
-  last_acknowledged_unix
+  last_acknowledged_unix,
+  requested_reviewers
 FROM pull_requests
 WHERE repository = ?
 AND number = ?
