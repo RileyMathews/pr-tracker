@@ -13,9 +13,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"git.rileymathews.com/riley/pr-tracker/internal/db/gen"
-	"git.rileymathews.com/riley/pr-tracker/internal/db/repository"
-	"git.rileymathews.com/riley/pr-tracker/internal/service"
+	"git.rileymathews.com/riley/pr-tracker/internal/core"
+	"git.rileymathews.com/riley/pr-tracker/internal/github"
 	_ "modernc.org/sqlite"
 )
 
@@ -27,13 +26,6 @@ func main() {
 
 	const repoName = "MercuryTechnologies/mercury-web-backend"
 	const prID = 65326
-
-	internalPR, err := service.FetchPullRequestDetails(repoName, prID, token)
-	if err != nil {
-		log.Fatalf("transform github PR to internal model failed: %v", err)
-	}
-	log.Printf("Internal PR response: %+v", internalPR)
-
 	dbConn, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		log.Fatalf("open sqlite db failed: %v", err)
@@ -43,27 +35,22 @@ func main() {
 			log.Printf("close sqlite db failed: %v", closeErr)
 		}
 	}()
-
 	ctx := context.Background()
 	if err := applyMigrations(ctx, dbConn, "internal/db/migrations"); err != nil {
 		log.Fatalf("apply sqlite migrations failed: %v", err)
 	}
 
-	queries := gen.New(dbConn)
-
-	repository := repository.New(queries, ctx)
-
-	saveErr := repository.SavePr(internalPR)
-	if saveErr != nil {
-		log.Fatalf("saving PR failed: %v", saveErr)
+	prs, prsErr := github.FetchOpenPullRequests(repoName, token)
+	if prsErr != nil {
+		log.Fatalf("fetch open prs failed: %v", prsErr)
 	}
+	log.Printf("fetched %d open prs", len(prs))
 
-	persistedPR, fetchErr := repository.GetPr(internalPR.Repository, internalPR.Number)
-	if fetchErr != nil {
-		log.Fatalf("Fetching PR failed: %v", fetchErr)
+	for _, pr := range prs {
+		if core.ShouldTrackPR(&pr, []string{"RileyMathews"}) {
+			log.Printf("tracking pr #%d", pr.Number)
+		}
 	}
-
-	log.Printf("Persisted internal PR response: %+v", persistedPR)
 }
 
 func applyMigrations(ctx context.Context, dbConn *sql.DB, migrationsDir string) error {
@@ -89,4 +76,3 @@ func applyMigrations(ctx context.Context, dbConn *sql.DB, migrationsDir string) 
 
 	return nil
 }
-

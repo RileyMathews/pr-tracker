@@ -11,13 +11,13 @@ import (
 
 type DatabaseRepository struct {
 	queries *gen.Queries
-	ctx context.Context
+	ctx     context.Context
 }
 
 func New(queries *gen.Queries, context context.Context) *DatabaseRepository {
-	return &DatabaseRepository {
+	return &DatabaseRepository{
 		queries: queries,
-		ctx: context,
+		ctx:     context,
 	}
 }
 
@@ -72,7 +72,6 @@ func (repository *DatabaseRepository) GetPr(repoName string, prNumber int) (*mod
 	}, nil
 }
 
-
 func timeToNullInt64(value *time.Time) sql.NullInt64 {
 	if value == nil {
 		return sql.NullInt64{}
@@ -80,4 +79,3 @@ func timeToNullInt64(value *time.Time) sql.NullInt64 {
 
 	return sql.NullInt64{Int64: value.Unix(), Valid: true}
 }
-

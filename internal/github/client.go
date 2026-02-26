@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -103,6 +104,7 @@ func FetchOpenPullRequests(repoName, authToken string) ([]PullRequest, error) {
 	nextURL := fmt.Sprintf("%s/repos/%s/pulls?state=open&per_page=%d&page=1", baseURL, repoName, perPage)
 	for nextURL != "" {
 		var pagePRs []PullRequest
+		log.Printf("fetching open prs from: %s", nextURL)
 		resp, err := getJSON(httpClient, nextURL, authToken, &pagePRs)
 		if err != nil {
 			return nil, err
