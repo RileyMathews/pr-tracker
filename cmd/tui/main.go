@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 
 	tea "charm.land/bubbletea/v2"
 	"git.rileymathews.com/riley/pr-tracker/internal/db/gen"
@@ -47,7 +48,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.cursor++
 					}
 
-				// case "enter", "space":
+				case "enter", "space":
+					if len(m.prs) == 0 {
+						break
+					}
+
+					pr := m.prs[m.cursor]
+					if err := exec.Command("xdg-open", pr.Url()).Start(); err != nil {
+						log.Printf("open browser failed: %v", err)
+					}
 					
 			}
 	}

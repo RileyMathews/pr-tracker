@@ -57,6 +57,10 @@ func (pr PullRequest) UpdatesSinceLastAck() string {
 	return "  New PR"
 }
 
+func (pr PullRequest) Url() string {
+	return fmt.Sprintf("https://github.com/%s/pull/%d", pr.Repository, pr.Number)
+}
+
 type User struct {
 	AccessToken string
 	Username string
