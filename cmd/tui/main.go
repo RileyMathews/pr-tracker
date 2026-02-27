@@ -1,21 +1,29 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
+	"log"
 	"os"
 
 	tea "charm.land/bubbletea/v2"
+	"git.rileymathews.com/riley/pr-tracker/internal/db/gen"
+	"git.rileymathews.com/riley/pr-tracker/internal/db/repository"
+	"git.rileymathews.com/riley/pr-tracker/internal/models"
+	_ "modernc.org/sqlite"
 )
 
 type model struct {
-	choices []string
+	prs []*models.PullRequest
 	cursor int
 	selected map[int]struct{}
 }
 
-func initialModel() model {
+func initialModel(prs []*models.PullRequest) model {
+	
 	return model{
-		choices: []string{"Option 1", "Option 2", "Option 3"},
+		prs: prs,
 		cursor: 0,
 		selected: make(map[int]struct{}),
 	}
@@ -37,7 +45,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 
 				case "down", "j":
-					if m.cursor < len(m.choices)-1 {
+					if m.cursor < len(m.prs)-1 {
 						m.cursor++
 					}
 
@@ -57,7 +65,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() tea.View {
 	s := "What should we buy at the market?\n\n"
 
-	for i, choice := range m.choices {
+	for i, choice := range m.prs {
 		cursor := " "
 		if m.cursor == i {
 			cursor = ">"
@@ -77,7 +85,30 @@ func (m model) View() tea.View {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	dbConn, err := sql.Open("sqlite", "./db.sqlite3")
+	if err != nil {
+		log.Fatalf("open sqlite db failed: %v", err)
+	}
+	defer func() {
+		if closeErr := dbConn.Close(); closeErr != nil {
+			log.Printf("close sqlite db failed: %v", closeErr)
+		}
+	}()
+
+	ctx := context.Background()
+	if err := repository.ApplyMigrations(ctx, dbConn, "internal/db/migrations"); err != nil {
+		log.Fatalf("apply sqlite migrations failed: %v", err)
+	}
+
+	queries := gen.New(dbConn)
+	repo := repository.New(queries, ctx)
+
+	prs, err := repo.GetAllPrs()
+	if err != nil {
+		log.Fatalf("could not fetch PRs %v", err)
+	}
+
+	p := tea.NewProgram(initialModel(prs))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas there's been an error: %v", err)
 		os.Exit(1)
